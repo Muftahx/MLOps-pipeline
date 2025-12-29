@@ -52,17 +52,61 @@ docker run -p 8000:8000 sales-classifier:v1
 
 ---
 
+## 🛠️ Manual Installation (Run Without Docker)
+
+If you prefer to run the project locally on your machine, follow these steps.
+
+### 1️⃣ Set Up Environment
+
+Create and activate a virtual environment.
+
+```bash
+# Windows
+python -m venv .venv
+.venv\Scripts\activate
+
+# macOS / Linux
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 2️⃣ Run the Training Pipeline
+
+Execute the Prefect flow to clean data, train the model, and register it in MLflow.
+
+```bash
+python -m pipelines.prefect_flow
+```
+
+This creates a local `mlruns/` directory and `mlflow.db`.
+
+---
+
+### 3️⃣ Start the API Server
+
+Launch the FastAPI application.
+
+```bash
+uvicorn src.serve_api:app --host 0.0.0.0 --port 8000 --reload
+```
+
+---
+
 ## ✅ Validation & Testing
 
-This project includes tools to verify the integrity of the pipeline and API before deployment.
+Tools are provided to verify pipeline and API correctness.
 
-### 🩺 Pipeline Validator (`validate_pipeline.py`)
+### 🩺 Pipeline Validator
 
-Runs a full **system health check**, validating:
-
-* Required project files and directories
-* Processed dataset schema
-* Presence of a trained and registered MLflow model
+Runs a full system health check.
 
 ```bash
 python validate_pipeline.py
@@ -76,9 +120,9 @@ python validate_pipeline.py
 
 ---
 
-### 🧪 Automated Tests (`tests/`)
+### 🧪 Automated Tests
 
-Uses **pytest** to run integration tests on the API logic, ensuring the prediction endpoint behaves correctly.
+Run integration tests using pytest.
 
 ```bash
 python -m pytest tests/
@@ -94,7 +138,7 @@ python -m pytest tests/
 
 ## ⚡ API Usage
 
-### 🔁 Using CURL (Terminal)
+### 🔁 Using CURL
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/predict" \
@@ -123,11 +167,10 @@ curl -X POST "http://127.0.0.1:8000/predict" \
 
 ### ❗ Model Not Found / Path Errors
 
-* The model is **trained inside the Docker image during build time**
-* Do **NOT** mount a Windows-created `mlflow.db` into the container
-* Always rebuild with:
+* The model is trained **inside the Docker image during build**
+* Do **NOT** mount a Windows-generated `mlflow.db` into Docker
+* Always rebuild using:
 
 ```bash
 docker build --no-cache -t sales-classifier:v1 .
 ```
-
