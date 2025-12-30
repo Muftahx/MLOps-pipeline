@@ -20,7 +20,7 @@ on:
         type: boolean
 
 env:
-  PYTHON_VERSION: '3.9'
+  PYTHON_VERSION: '3.10'
   IMAGE_NAME: sales-quantity-classifier-api
   REGISTRY: ghcr.io
 
