@@ -9,7 +9,6 @@ from src.feature_transformer import transform_raw_input
 
 # --- Configuration ---
 MODEL_NAME = "sales-quantity-classifier"
-# We try Production first. If it fails, the logs will tell us.
 MODEL_STAGE = "Production" 
 
 # --- Logging Setup ---
@@ -28,7 +27,7 @@ class ModelLoader:
         """Loads the model from MLflow with Debugging."""
         print(f"🔍 DEBUG: Connecting to MLflow tracking URI...")
         try:
-            # CHANGED: Used '@' instead of '/' to load by ALIAS
+            # Load by ALIAS as per MLflow best practices
             model_uri = f"models:/{MODEL_NAME}@{MODEL_STAGE}"
             print(f"🔍 DEBUG: Attempting to load: {model_uri}")
             
@@ -55,43 +54,64 @@ class TransactionInput(BaseModel):
     InvoiceNumber: str
     ItemCode: str
     QuantitySold: float
-    # Optional fields to satisfy strict contracts if needed
+    # Optional fields
     BranchName: Optional[str] = "Unknown"
     ItemName: Optional[str] = "Unknown"
 
 class PredictionOutput(BaseModel):
     prediction: str
     class_id: int
+    status: str = "success"  # Added status field for observability
+    note: Optional[str] = None
 
 # --- Endpoints ---
 @app.get("/health")
 def health_check():
+    # Matches your test_api.py expectation exactly
     status = "active" if model_loader.model else "inactive"
     return {"status": status}
 
 @app.post("/predict", response_model=PredictionOutput)
 def predict_endpoint(transaction: TransactionInput):
+    # Check if model is loaded, but DON'T crash. Use fallback if model is missing.
     if not model_loader.model:
-        raise HTTPException(status_code=503, detail="Model service is unavailable (Model not loaded)")
+        logger.warning("⚠️ Model missing. Using heuristic fallback.")
+        return {
+            "prediction": "LOW", 
+            "class_id": 0, 
+            "status": "fallback", 
+            "note": "Model not loaded, used default safety stock."
+        }
     
     try:
-        # 1. Convert Input to Dict
-        data_dict = transaction.dict()
+        # 1. Convert Input to Dict (Updated to model_dump to fix warning)
+        data_dict = transaction.model_dump()
         
-        # 2. Transform Features (Must match training!)
-        # We need to ensure the transformer uses the same logic
+        # 2. Transform Features
         features_df = transform_raw_input(data_dict)
         
         # 3. Predict
-        # XGBoost returns [0, 1, 2]
         pred_idx = model_loader.predict(features_df)[0]
         
         # 4. Map to Label
         labels = {0: "LOW", 1: "MEDIUM", 2: "HIGH"}
         result_label = labels.get(int(pred_idx), "UNKNOWN")
         
-        return {"prediction": result_label, "class_id": int(pred_idx)}
+        return {
+            "prediction": result_label, 
+            "class_id": int(pred_idx),
+            "status": "success"
+        }
 
     except Exception as e:
-        logger.error(f"Prediction Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # --- ALGORITHMIC FALLBACK STRATEGY (Requirement III.3) ---
+        # If the ML model crashes (e.g., bad feature conversion), 
+        # do NOT return 500 error. Return a safe business default.
+        logger.error(f"🚨 Prediction Error: {e}. Switching to Fallback Strategy.")
+        
+        return {
+            "prediction": "LOW",     # Safe default (minimize risk of overstocking)
+            "class_id": 0,
+            "status": "fallback",
+            "note": f"Error during inference: {str(e)}"
+        }
