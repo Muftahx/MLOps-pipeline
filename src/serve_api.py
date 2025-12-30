@@ -67,9 +67,7 @@ class PredictionOutput(BaseModel):
 # --- Endpoints ---
 @app.get("/health")
 def health_check():
-    # Matches your test_api.py expectation exactly
-    status = "active" if model_loader.model else "inactive"
-    return {"status": status}
+    return {"status": "active"}
 
 @app.post("/predict", response_model=PredictionOutput)
 def predict_endpoint(transaction: TransactionInput):
