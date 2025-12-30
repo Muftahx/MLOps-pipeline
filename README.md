@@ -159,7 +159,8 @@ curl -X POST "http://127.0.0.1:8000/predict" \
            "BranchID": "10",
            "InvoiceNumber": "INV-HIGH-003",
            "ItemCode": "30003",
-           "Qua
+           "QuantitySold": 15.0
+         }'
 ```
 
 --- 
