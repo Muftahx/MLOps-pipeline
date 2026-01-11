@@ -90,6 +90,8 @@ jobs:
       run: |
         pip install -r requirements.txt
         pip install pytest httpx
+        # This tells Python to look in the current directory (.) for modules
+        export PYTHONPATH=$PYTHONPATH:.
         pytest tests/test_api.py
 
     # Task 2.3: Smoke Test (The "Deployment" Check)
