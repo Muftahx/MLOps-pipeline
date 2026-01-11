@@ -25,7 +25,7 @@ def test_hashing_consistency():
     bucket_1 = hash_feature(input_val)
     bucket_2 = hash_feature(input_val)
     
-    assert bucket_1 != bucket_2, "Hashing must be deterministic!"
+    assert bucket_1 == bucket_2, "Hashing must be deterministic!"
     assert isinstance(bucket_1, int), "Hash must return an integer"
 
 def test_hashing_null_handling():
