@@ -1,5 +1,5 @@
 # .github/workflows/mlops-pipeline.yml
-name: MLOps CI/CD Pipeline (Homework 2)
+name: MLOps CI/CD Pipeline 
 
 on:
   push:
@@ -13,7 +13,7 @@ env:
 
 jobs:
   # ===========================
-  # JOB 1: Code Quality & Unit Tests (Homework Part 1)
+  # JOB 1: Code Quality & Unit Tests 
   # ===========================
   test-and-lint:
     name: Code Quality & Unit Tests
@@ -45,7 +45,7 @@ jobs:
         pytest tests/test_unit.py
 
   # ===========================
-  # JOB 2: Data Validation (Your Advanced Step)
+  # JOB 2: Data Validation 
   # ===========================
   data-validation:
     name: Data Quality Checks
@@ -64,12 +64,11 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements.txt
       
-    # Assuming you have this file from our previous work
     - name: Check data drift
       run: python monitoring/data_drift_monitor.py || echo "Drift monitor skipped (File not found)"
 
   # ===========================
-  # JOB 3: Build & Smoke Test (Homework Part 2)
+  # JOB 3: Build & Smoke Test 
   # ===========================
   build-and-smoke:
     name: Build & Smoke Test
@@ -110,7 +109,7 @@ jobs:
         docker stop ml-api
 
   # ===========================
-  # JOB 4: Train Model (Your Advanced Step)
+  # JOB 4: Train Model 
   # ===========================
   train-model:
     name: Train Model
